@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.cdfsunrise.smart.framework.core.domain.BaseRepository;
 import com.cdfsunrise.smart.framework.core.domain.EntityStatus;
-import com.cdfsunrise.smart.framework.core.util.tuple.Pair;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfo;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoRepository;
 import com.cdfsunrise.switchcenter.adapter.driving.repository.switchinfo.dao.SwitchInfoMapper;
@@ -14,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,6 +21,7 @@ import java.util.Optional;
 public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo> implements SwitchInfoRepository {
 
     private final SwitchInfoMapper switchInfoMapper;
+    private final SwitchInfoConverter switchInfoConverter;
 
     @Override
     protected void saveInternal(SwitchInfo aggregate) {
@@ -31,14 +30,10 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
             return;
         }
 
-        Pair<SwitchInfoPo, List<SwitchInfoPo>> switchPo = SwitchInfoConverter.toPo(aggregate);
+        SwitchInfoPo switchPo = switchInfoConverter.toPo(aggregate);
         if (aggregate.entityStatus() != EntityStatus.UNCHANGED) {
-            saveSinglePo(switchPo.getValue0(), aggregate.entityStatus());
+            saveSinglePo(switchPo, aggregate.entityStatus());
         }
-
-        aggregate.getChildSwitches().stream()
-                .filter(f -> f.entityStatus() != EntityStatus.UNCHANGED)
-                .forEach(this::saveInternal);
     }
 
     private void deleteWithCascade(SwitchInfo aggregate) {
@@ -68,15 +63,7 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
 
         SwitchInfoPo switchInfoPo = switchInfoMapper.selectOne(queryWrapper);
 
-        return Optional.ofNullable(switchInfoPo).map(f -> {
-            LambdaQueryWrapper<SwitchInfoPo> childQueryWrapper = Wrappers.<SwitchInfoPo>lambdaQuery()
-                    .eq(SwitchInfoPo::getNamespaceId, namespaceId)
-                    .eq(SwitchInfoPo::getParentKey, key);
-
-            List<SwitchInfoPo> childrenSwitchInfoPo = switchInfoMapper.selectList(childQueryWrapper);
-
-            return SwitchInfoConverter.toDomain(f, childrenSwitchInfoPo);
-        });
+        return Optional.ofNullable(switchInfoPo).map(switchInfoConverter::toDomain);
     }
 
     @Override

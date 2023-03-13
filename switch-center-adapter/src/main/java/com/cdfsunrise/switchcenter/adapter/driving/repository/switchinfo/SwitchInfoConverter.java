@@ -1,29 +1,18 @@
 package com.cdfsunrise.switchcenter.adapter.driving.repository.switchinfo;
 
-import com.cdfsunrise.smart.framework.core.util.tuple.Pair;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfo;
+import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoBuilder;
 import com.cdfsunrise.switchcenter.adapter.driving.repository.switchinfo.dao.SwitchInfoPo;
-import org.apache.commons.lang3.StringUtils;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+@Component
+@RequiredArgsConstructor
 public class SwitchInfoConverter {
 
-    private SwitchInfoConverter() {
-    }
+    private final SwitchInfoBuilder switchInfoBuilder;
 
-    public static Pair<SwitchInfoPo, List<SwitchInfoPo>> toPo(SwitchInfo switchInfo) {
-
-        SwitchInfoPo switchInfoPo = toPoIgnoreChildren(switchInfo);
-        List<SwitchInfoPo> children = switchInfo.getChildSwitches().stream()
-                .map(SwitchInfoConverter::toPoIgnoreChildren)
-                .collect(Collectors.toList());
-
-        return Pair.with(switchInfoPo, children);
-    }
-
-    private static SwitchInfoPo toPoIgnoreChildren(SwitchInfo switchInfo) {
+    public SwitchInfoPo toPo(SwitchInfo switchInfo) {
         SwitchInfoPo switchInfoPo = new SwitchInfoPo();
         switchInfoPo.setId(switchInfo.getId());
         switchInfoPo.setNamespaceId(switchInfo.getNamespaceId());
@@ -38,20 +27,19 @@ public class SwitchInfoConverter {
         return switchInfoPo;
     }
 
-    public static SwitchInfo toDomain(SwitchInfoPo switchInfoPo, List<SwitchInfoPo> children) {
-        SwitchInfo switchInfo;
-        if (StringUtils.isEmpty(switchInfoPo.getParentKey())) {
-            switchInfo = new SwitchInfo(switchInfoPo.getNamespaceId(), switchInfoPo.getKey());
-        } else {
-            switchInfo = new SwitchInfo(switchInfoPo.getNamespaceId(), switchInfoPo.getParentKey(), switchInfoPo.getKey());
-        }
+    public SwitchInfo toDomain(SwitchInfoPo switchInfoPo) {
 
-        switchInfo.initDisplay(switchInfoPo.getName(), switchInfoPo.getDescription());
-        switchInfo.initSwitchValue(switchInfoPo.getOffValue(), switchInfoPo.getOnValue());
-
-        switchInfo.onPersisted(switchInfoPo.getId());
-
-        return switchInfo;
+        return switchInfoBuilder
+                .namespaceId(switchInfoPo.getNamespaceId())
+                .name(switchInfoPo.getName())
+                .onValue(switchInfoPo.getOnValue())
+                .offValue(switchInfoPo.getOffValue())
+                .on(switchInfoPo.getOn())
+                .key(switchInfoPo.getKey())
+                .id(switchInfoPo.getId())
+                .description(switchInfoPo.getDescription())
+                .parentKey(switchInfoPo.getParentKey())
+                .build();
     }
 
 }

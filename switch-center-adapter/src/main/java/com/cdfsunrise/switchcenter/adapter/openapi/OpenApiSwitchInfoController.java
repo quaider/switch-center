@@ -3,6 +3,7 @@ package com.cdfsunrise.switchcenter.adapter.openapi;
 import com.cdfsunrise.smart.framework.core.Result;
 import com.cdfsunrise.switchcenter.adapter.application.switchinfo.SwitchInfoCmd;
 import com.cdfsunrise.switchcenter.adapter.application.switchinfo.SwitchInfoService;
+import com.cdfsunrise.switchcenter.adapter.application.switchinfo.SwitchInfoStatusChangeCmd;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -21,7 +22,7 @@ public class OpenApiSwitchInfoController {
     @PutMapping("/{namespaceId}")
     public Result<Void> addParentSwitch(@PathVariable String namespaceId, @Valid @RequestBody SwitchInfoCmd.Add cmd) {
         SwitchInfoCmd switchInfoCmd = new SwitchInfoCmd(cmd, namespaceId);
-        switchInfoService.addParentSwitch(switchInfoCmd);
+        switchInfoService.addSwitch(switchInfoCmd);
 
         return Result.success();
     }
@@ -29,7 +30,14 @@ public class OpenApiSwitchInfoController {
     @PutMapping("/{namespaceId}/{parentKey}")
     public Result<Void> addChildSwitch(@PathVariable String namespaceId, @PathVariable String parentKey, @Valid @RequestBody SwitchInfoCmd.Add cmd) {
         SwitchInfoCmd switchInfoCmd = new SwitchInfoCmd(cmd, namespaceId, parentKey);
-        switchInfoService.addChildSwitch(switchInfoCmd);
+        switchInfoService.addSwitch(switchInfoCmd);
+
+        return Result.success();
+    }
+
+    @PostMapping("/{namespaceId}/{key}")
+    public Result<Void> changeStatus(@PathVariable String namespaceId, @PathVariable String key, @RequestBody @Valid SwitchInfoStatusChangeCmd cmd) {
+        switchInfoService.changeStatus(namespaceId, key, cmd);
 
         return Result.success();
     }

@@ -1,44 +1,70 @@
 package com.cdfsunrise.switchcenter.adapter.application.switchinfo;
 
+import com.cdfsunrise.smart.framework.core.exception.BizNotFoundException;
 import com.cdfsunrise.switchcenter.adapter.domain.namespace.NamespaceValidator;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfo;
+import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoBuilder;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoRepository;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class SwitchInfoService {
 
     private final SwitchInfoRepository switchRepository;
-    private final SwitchInfoValidator switchValidator;
     private final NamespaceValidator namespaceValidator;
 
+    private final SwitchInfoValidator switchInfoValidator;
+
+    private final SwitchInfoBuilder switchInfoBuilder;
+
     @Transactional(rollbackFor = Throwable.class)
-    public void addParentSwitch(SwitchInfoCmd cmd) {
+    public void addSwitch(SwitchInfoCmd cmd) {
 
-        namespaceValidator.namespaceMustExist(cmd.getNamespaceId());
-        switchValidator.switchMustUnique(cmd.getNamespaceId(), cmd.getKey());
-
-        SwitchInfo switchInfo = new SwitchInfo(cmd.getNamespaceId(), cmd.getKey());
-        switchInfo.initDisplay(cmd.getName(), cmd.getDescription());
-        switchInfo.initSwitchValue(cmd.getOffValue(), cmd.getOnValue());
+        SwitchInfo switchInfo = switchInfoBuilder
+                .namespaceId(cmd.getNamespaceId())
+                .parentKey(cmd.getParentKey())
+                .key(cmd.getKey())
+                .on(false)
+                .onValue(cmd.getOnValue())
+                .offValue(cmd.getOffValue())
+                .name(cmd.getName())
+                .description(cmd.getDescription())
+                .build();
 
         switchRepository.save(switchInfo);
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void addChildSwitch(SwitchInfoCmd cmd) {
-        namespaceValidator.namespaceMustExist(cmd.getNamespaceId());
-        SwitchInfo parent = switchValidator.parentSwitchMustExist(cmd.getNamespaceId(), cmd.getParentKey());
-        switchValidator.switchMustUnique(cmd.getNamespaceId(), cmd.getKey());
+    public void changeStatus(String namespaceId, String key, SwitchInfoStatusChangeCmd cmd) {
+        namespaceValidator.namespaceMustExist(namespaceId);
 
-        parent.addChildSwitch(cmd.getKey(), cmd.getName(), cmd.getDescription(), cmd.getOffValue(), cmd.getOnValue())
-                .toUnChange();
+        Optional<SwitchInfo> switchInfoOpt = switchRepository.findByNamespaceAndKey(namespaceId, key);
+        if (!switchInfoOpt.isPresent()) {
+            throw new BizNotFoundException("the switch with key `{}` in namespace `{}` not found", key, namespaceId);
+        }
 
-        switchRepository.save(parent);
+        SwitchInfo switchInfo = switchInfoOpt.get();
+        SwitchInfo parent = null;
+
+        if (switchInfo.isParent()) {
+            parent = switchInfoValidator.parentSwitchMustExist(namespaceId, switchInfo.getParentKey());
+        }
+
+        if (Boolean.TRUE.equals(cmd.getTurnOn())) {
+            switchInfo.turnOn(parent);
+        } else {
+            switchInfo.turnOff();
+        }
+
+        switchInfo.toUpdate();
+
+        switchRepository.save(switchInfo);
     }
 
 }
