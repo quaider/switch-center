@@ -1,16 +1,16 @@
 package com.cdfsunrise.switchcenter.adapter.domain.namespace;
 
+import com.cdfsunrise.smart.framework.core.domain.DomainInjector;
 import com.cdfsunrise.smart.framework.core.exception.BizDuplicatedException;
 import com.cdfsunrise.smart.framework.core.exception.BizNotFoundException;
 import com.cdfsunrise.smart.framework.core.exception.BizValidateException;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * 领域服务
  */
-@Component
+@DomainInjector
 @RequiredArgsConstructor
 public class NamespaceValidator {
 

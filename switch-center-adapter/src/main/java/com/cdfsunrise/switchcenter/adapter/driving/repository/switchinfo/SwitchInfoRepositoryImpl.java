@@ -39,10 +39,11 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
     private void deleteWithCascade(SwitchInfo aggregate) {
         switchInfoMapper.deleteById(aggregate.getId());
 
-        if (StringUtils.isEmpty((aggregate.getParentKey()))) {
+        if (StringUtils.isEmpty((aggregate.getSwitchKey().getParentKey()))) {
             LambdaQueryWrapper<SwitchInfoPo> batchDeleteQuery = Wrappers.<SwitchInfoPo>lambdaQuery()
-                    .eq(SwitchInfoPo::getNamespaceId, aggregate.getNamespaceId())
-                    .eq(SwitchInfoPo::getParentKey, aggregate.getKey());
+                    .eq(SwitchInfoPo::getNamespaceId, aggregate.getSwitchKey().getNamespaceId())
+                    .eq(SwitchInfoPo::getParentKey, aggregate.getSwitchKey().getKey());
+
             switchInfoMapper.delete(batchDeleteQuery);
         }
     }

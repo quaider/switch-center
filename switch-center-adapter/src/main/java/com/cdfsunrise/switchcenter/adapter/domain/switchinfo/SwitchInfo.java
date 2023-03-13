@@ -2,8 +2,6 @@ package com.cdfsunrise.switchcenter.adapter.domain.switchinfo;
 
 import com.cdfsunrise.smart.framework.core.domain.AggregateRoot;
 import com.cdfsunrise.smart.framework.core.exception.BizForbiddenException;
-import com.cdfsunrise.smart.framework.core.exception.BizValidateException;
-import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,29 +9,32 @@ import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
-@Setter(value = AccessLevel.PACKAGE)
 public class SwitchInfo extends AggregateRoot<Integer, SwitchInfo> {
 
-    @Setter(AccessLevel.PROTECTED)
+    @Setter
     private Integer id;
 
-    private final String namespaceId;
-    private final String parentKey;
-    private final String key;
-    private String name;
-    private String description;
+    private final SwitchKey switchKey;
+
+    private SwitchDescription description;
+
+    private SwitchValue value;
+
     private boolean on = false;
-    private String offValue = "off";
-    private String onValue = "on";
 
     public SwitchInfo(String namespaceId, String parentKey, String key) {
-        if (StringUtils.isEmpty(namespaceId) || parentKey == null || StringUtils.isEmpty(key)) {
-            throw new BizValidateException("field in [namespaceId, parentKey, key] is required");
+        this.switchKey = new SwitchKey(namespaceId, parentKey, key);
+    }
+
+    public SwitchInfo(SwitchKey switchKey, SwitchDescription description, SwitchValue value, boolean on) {
+        if (switchKey == null || description == null || value == null) {
+            throw new IllegalArgumentException("switchKey or description or value is required");
         }
 
-        this.namespaceId = namespaceId;
-        this.parentKey = parentKey;
-        this.key = key;
+        this.switchKey = switchKey;
+        this.description = description;
+        this.value = value;
+        this.on = on;
     }
 
     public void turnOff() {
@@ -57,14 +58,14 @@ public class SwitchInfo extends AggregateRoot<Integer, SwitchInfo> {
     }
 
     public String activeValue() {
-        return this.on ? onValue : offValue;
+        return this.on ? value.getOnValue() : value.getOffValue();
     }
 
     public String qualifiedKey() {
-        return String.format("%s.%s.%s", namespaceId, parentKey, key);
+        return switchKey.qualifiedKey();
     }
 
     public boolean isParent() {
-        return StringUtils.isEmpty(parentKey);
+        return StringUtils.isEmpty(switchKey.getParentKey());
     }
 }
