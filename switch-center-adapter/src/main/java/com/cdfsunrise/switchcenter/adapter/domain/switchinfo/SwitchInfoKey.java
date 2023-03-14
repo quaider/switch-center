@@ -8,13 +8,13 @@ import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class SwitchKey extends ValueObject<SwitchKey> {
+public class SwitchInfoKey extends ValueObject<SwitchInfoKey> {
 
     private final String namespaceId;
     private final String parentKey;
     private final String key;
 
-    public SwitchKey(String namespaceId, String parentKey, String key) {
+    public SwitchInfoKey(String namespaceId, String parentKey, String key) {
         if (StringUtils.isEmpty(namespaceId) || parentKey == null || StringUtils.isEmpty(key)) {
             throw new BizValidateException("field in [namespaceId, parentKey, key] is required");
         }

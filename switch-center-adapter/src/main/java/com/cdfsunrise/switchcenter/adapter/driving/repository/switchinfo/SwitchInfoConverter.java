@@ -1,23 +1,22 @@
 package com.cdfsunrise.switchcenter.adapter.driving.repository.switchinfo;
 
-import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchDescription;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfo;
-import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchKey;
-import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchValue;
+import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoDescription;
+import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoKey;
+import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoValue;
 import com.cdfsunrise.switchcenter.adapter.driving.repository.switchinfo.dao.SwitchInfoPo;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
-@Component
-@RequiredArgsConstructor
 public class SwitchInfoConverter {
 
-    public SwitchInfoPo toPo(SwitchInfo switchInfo) {
+    private SwitchInfoConverter() {
+    }
+
+    public static SwitchInfoPo toPo(SwitchInfo switchInfo) {
         SwitchInfoPo switchInfoPo = new SwitchInfoPo();
         switchInfoPo.setId(switchInfo.getId());
-        switchInfoPo.setNamespaceId(switchInfo.getSwitchKey().getNamespaceId());
-        switchInfoPo.setParentKey(switchInfo.getSwitchKey().getParentKey());
-        switchInfoPo.setKey(switchInfo.getSwitchKey().getKey());
+        switchInfoPo.setNamespaceId(switchInfo.getSwitchInfoKey().getNamespaceId());
+        switchInfoPo.setParentKey(switchInfo.getSwitchInfoKey().getParentKey());
+        switchInfoPo.setKey(switchInfo.getSwitchInfoKey().getKey());
         switchInfoPo.setName(switchInfo.getDescription().getName());
         switchInfoPo.setDescription(switchInfo.getDescription().getDescription());
         switchInfoPo.setOn(switchInfo.isOn());
@@ -27,13 +26,13 @@ public class SwitchInfoConverter {
         return switchInfoPo;
     }
 
-    public SwitchInfo toDomain(SwitchInfoPo po) {
+    public static SwitchInfo toDomain(SwitchInfoPo po) {
         return new SwitchInfo(
-                new SwitchKey(po.getNamespaceId(), po.getParentKey(), po.getKey()),
-                new SwitchDescription(po.getName(), po.getDescription()),
-                new SwitchValue(po.getOffValue(), po.getOnValue()),
+                new SwitchInfoKey(po.getNamespaceId(), po.getParentKey(), po.getKey()),
+                new SwitchInfoDescription(po.getName(), po.getDescription()),
+                new SwitchInfoValue(po.getOffValue(), po.getOnValue()),
                 Boolean.TRUE.equals(po.getOn())
-        );
+        ).onPersisted(po.getId());
     }
 
 }

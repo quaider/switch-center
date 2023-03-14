@@ -2,3 +2,6 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
+
+  jackson:
+    default-property-inclusion: non_null

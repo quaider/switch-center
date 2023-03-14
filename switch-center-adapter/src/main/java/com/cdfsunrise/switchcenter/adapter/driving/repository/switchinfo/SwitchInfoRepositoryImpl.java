@@ -21,7 +21,6 @@ import java.util.Optional;
 public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo> implements SwitchInfoRepository {
 
     private final SwitchInfoMapper switchInfoMapper;
-    private final SwitchInfoConverter switchInfoConverter;
 
     @Override
     protected void saveInternal(SwitchInfo aggregate) {
@@ -30,7 +29,7 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
             return;
         }
 
-        SwitchInfoPo switchPo = switchInfoConverter.toPo(aggregate);
+        SwitchInfoPo switchPo = SwitchInfoConverter.toPo(aggregate);
         if (aggregate.entityStatus() != EntityStatus.UNCHANGED) {
             saveSinglePo(switchPo, aggregate.entityStatus());
         }
@@ -39,10 +38,10 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
     private void deleteWithCascade(SwitchInfo aggregate) {
         switchInfoMapper.deleteById(aggregate.getId());
 
-        if (StringUtils.isEmpty((aggregate.getSwitchKey().getParentKey()))) {
+        if (StringUtils.isEmpty((aggregate.getSwitchInfoKey().getParentKey()))) {
             LambdaQueryWrapper<SwitchInfoPo> batchDeleteQuery = Wrappers.<SwitchInfoPo>lambdaQuery()
-                    .eq(SwitchInfoPo::getNamespaceId, aggregate.getSwitchKey().getNamespaceId())
-                    .eq(SwitchInfoPo::getParentKey, aggregate.getSwitchKey().getKey());
+                    .eq(SwitchInfoPo::getNamespaceId, aggregate.getSwitchInfoKey().getNamespaceId())
+                    .eq(SwitchInfoPo::getParentKey, aggregate.getSwitchInfoKey().getKey());
 
             switchInfoMapper.delete(batchDeleteQuery);
         }
@@ -64,7 +63,7 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
 
         SwitchInfoPo switchInfoPo = switchInfoMapper.selectOne(queryWrapper);
 
-        return Optional.ofNullable(switchInfoPo).map(switchInfoConverter::toDomain);
+        return Optional.ofNullable(switchInfoPo).map(SwitchInfoConverter::toDomain);
     }
 
     @Override

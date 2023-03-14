@@ -8,11 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class SwitchValue extends ValueObject<SwitchValue> {
+public class SwitchInfoValue extends ValueObject<SwitchInfoValue> {
     private final String offValue;
     private final String onValue;
 
-    public SwitchValue(String offValue, String onValue) {
+    public SwitchInfoValue(String offValue, String onValue) {
         switchValueShouldNotEmptyAndSame(offValue, onValue);
 
         this.offValue = offValue;

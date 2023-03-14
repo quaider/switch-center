@@ -1,10 +1,11 @@
 package com.cdfsunrise.switchcenter.adapter.openapi;
 
 import com.cdfsunrise.smart.framework.core.Result;
-import com.cdfsunrise.switchcenter.adapter.application.switchinfo.SwitchInfoCmd;
-import com.cdfsunrise.switchcenter.adapter.application.switchinfo.SwitchInfoService;
-import com.cdfsunrise.switchcenter.adapter.application.switchinfo.SwitchInfoStatusChangeCmd;
+import com.cdfsunrise.switchcenter.adapter.application.switchinfo.*;
+import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoRepository;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +14,27 @@ import javax.validation.Valid;
 
 @Api(tags = "开关配置", produces = MediaType.APPLICATION_JSON_VALUE)
 @RestController
-@RequestMapping("/switch")
+@RequestMapping("/openapi/switch")
 @RequiredArgsConstructor
 public class OpenApiSwitchInfoController {
 
     private final SwitchInfoService switchInfoService;
+    private final SwitchInfoRepository switchInfoRepository;
+
+    private final SwitchInfoAssembler switchInfoAssembler;
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "namespaceId", value = "命名空间", dataTypeClass = String.class, required = true),
+            @ApiImplicitParam(name = "key", value = "开关键", dataTypeClass = String.class, required = true)
+    })
+    @GetMapping(value = "/{namespaceId}/{key}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Result<SwitchInfoValueResponse> getSwitchInfoValue(@PathVariable String namespaceId, @PathVariable String key) {
+        SwitchInfoValueResponse payload = switchInfoRepository.findByNamespaceAndKey(namespaceId, key)
+                .map(switchInfoAssembler::toSwitchInfoValueResponse)
+                .orElse(null);
+
+        return Result.success(payload);
+    }
 
     @PutMapping("/{namespaceId}")
     public Result<Void> addParentSwitch(@PathVariable String namespaceId, @Valid @RequestBody SwitchInfoCmd.Add cmd) {

@@ -11,27 +11,30 @@ import org.apache.commons.lang3.StringUtils;
 @EqualsAndHashCode(callSuper = true)
 public class SwitchInfo extends AggregateRoot<Integer, SwitchInfo> {
 
+    /**
+     * 没有实际作用，只是为了给给orm或mybatis使用
+     */
     @Setter
     private Integer id;
 
-    private final SwitchKey switchKey;
+    private final SwitchInfoKey switchInfoKey;
 
-    private SwitchDescription description;
+    private SwitchInfoDescription description;
 
-    private SwitchValue value;
+    private SwitchInfoValue value;
 
     private boolean on = false;
 
     public SwitchInfo(String namespaceId, String parentKey, String key) {
-        this.switchKey = new SwitchKey(namespaceId, parentKey, key);
+        this.switchInfoKey = new SwitchInfoKey(namespaceId, parentKey, key);
     }
 
-    public SwitchInfo(SwitchKey switchKey, SwitchDescription description, SwitchValue value, boolean on) {
-        if (switchKey == null || description == null || value == null) {
+    public SwitchInfo(SwitchInfoKey switchInfoKey, SwitchInfoDescription description, SwitchInfoValue value, boolean on) {
+        if (switchInfoKey == null || description == null || value == null) {
             throw new IllegalArgumentException("switchKey or description or value is required");
         }
 
-        this.switchKey = switchKey;
+        this.switchInfoKey = switchInfoKey;
         this.description = description;
         this.value = value;
         this.on = on;
@@ -62,10 +65,10 @@ public class SwitchInfo extends AggregateRoot<Integer, SwitchInfo> {
     }
 
     public String qualifiedKey() {
-        return switchKey.qualifiedKey();
+        return switchInfoKey.qualifiedKey();
     }
 
     public boolean isParent() {
-        return StringUtils.isEmpty(switchKey.getParentKey());
+        return StringUtils.isEmpty(switchInfoKey.getParentKey());
     }
 }

@@ -8,11 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class SwitchDescription extends ValueObject<SwitchDescription> {
+public class SwitchInfoDescription extends ValueObject<SwitchInfoDescription> {
     private final String name;
     private final String description;
 
-    public SwitchDescription(String name, String description) {
+    public SwitchInfoDescription(String name, String description) {
         if (StringUtils.isEmpty(name)) {
             throw new BizValidateException("name is required");
         }

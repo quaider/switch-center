@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class SwitchResponse implements Serializable {
+public class SwitchInfoResponse implements Serializable {
     private static final long serialVersionUID = -3517690877955253074L;
 
     private Integer id;

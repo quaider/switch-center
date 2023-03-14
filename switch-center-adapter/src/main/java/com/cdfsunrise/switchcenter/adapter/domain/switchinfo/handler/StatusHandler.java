@@ -29,8 +29,8 @@ public class StatusHandler {
         SwitchInfo switchInfo = switchInfoOpt.get();
         SwitchInfo parent = null;
 
-        if (switchInfo.isParent()) {
-            parent = switchInfoValidator.parentSwitchMustExist(namespaceId, switchInfo.getSwitchKey().getParentKey());
+        if (!switchInfo.isParent()) {
+            parent = switchInfoValidator.parentSwitchMustExist(namespaceId, switchInfo.getSwitchInfoKey().getParentKey());
         }
 
         if (turnOn) {

@@ -11,16 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class SwitchInfoService {
 
     private final SwitchInfoRepository switchRepository;
-    private final SwitchFactory switchFactory;
+    private final SwitchInfoFactory switchInfoFactory;
     private final StatusHandler handler;
 
     @Transactional(rollbackFor = Throwable.class)
     public void addSwitch(SwitchInfoCmd cmd) {
 
-        SwitchInfo switchInfo = switchFactory.create(
-                new SwitchKey(cmd.getNamespaceId(), cmd.getParentKey(), cmd.getKey()),
-                new SwitchDescription(cmd.getName(), cmd.getDescription()),
-                new SwitchValue(cmd.getOffValue(), cmd.getOnValue())
+        SwitchInfo switchInfo = switchInfoFactory.create(
+                new SwitchInfoKey(cmd.getNamespaceId(), cmd.getParentKey(), cmd.getKey()),
+                new SwitchInfoDescription(cmd.getName(), cmd.getDescription()),
+                new SwitchInfoValue(cmd.getOffValue(), cmd.getOnValue())
         );
 
         switchRepository.save(switchInfo);
