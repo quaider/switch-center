@@ -1,10 +1,12 @@
 server:
-  port: 8080
+  port: ${random.int(2000,8000)}
   shutdown: graceful
 
 spring:
   application:
     name: switch-center
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   profiles:
     active: dev
 

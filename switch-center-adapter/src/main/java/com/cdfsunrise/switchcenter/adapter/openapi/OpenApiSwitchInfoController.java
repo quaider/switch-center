@@ -1,6 +1,8 @@
 package com.cdfsunrise.switchcenter.adapter.openapi;
 
 import com.cdfsunrise.smart.framework.core.Result;
+import com.cdfsunrise.switchcenter.adapter.application.akka.AkkaServerEnvironment;
+import com.cdfsunrise.switchcenter.adapter.application.akka.CacheEvictionMessage;
 import com.cdfsunrise.switchcenter.adapter.application.switchinfo.*;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoRepository;
 import io.swagger.annotations.Api;
@@ -55,6 +57,8 @@ public class OpenApiSwitchInfoController {
     @PostMapping("/{namespaceId}/{key}")
     public Result<Void> changeStatus(@PathVariable String namespaceId, @PathVariable String key, @RequestBody @Valid SwitchInfoStatusChangeCmd cmd) {
         switchInfoService.changeStatus(namespaceId, key, cmd);
+
+        AkkaServerEnvironment.getEnv().getPublisher().tell(new CacheEvictionMessage(namespaceId, key), null);
 
         return Result.success();
     }

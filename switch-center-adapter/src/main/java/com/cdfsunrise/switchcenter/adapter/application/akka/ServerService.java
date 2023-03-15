@@ -1,7 +1,6 @@
 package com.cdfsunrise.switchcenter.adapter.application.akka;
 
 import akka.pattern.AskTimeoutException;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.cdfsunrise.smart.framework.core.exception.BizForbiddenException;
@@ -23,6 +22,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,41 +40,53 @@ public class ServerService {
 
         LambdaQueryWrapper<ServerInfoPo> queryWrapper = Wrappers.<ServerInfoPo>lambdaQuery()
                 .gt(ServerInfoPo::getUpdateTime, healthEndTime)
-                .orderByDesc(ServerInfoPo::getUpdateTime);
+                .orderByAsc(ServerInfoPo::getUpdateTime);
 
         return serverInfoMapper.selectList(queryWrapper);
     }
 
-    public List<ServerInfoPo> electSeedServer() {
-        List<ServerInfoPo> candidateSeedServers = getCandidateSeedServers();
+    public List<ServerInfoPo> electSeedServer(int size) {
+        final ServerInfoPo currentServer = currentServer();
+        List<ServerInfoPo> candidateSeedServers = getCandidateSeedServers().stream()
+                .filter(f -> !f.getIp().equals(currentServer.getIp()) || !f.getPort().equals(currentServer.getPort()))
+                .collect(Collectors.toList());
+
         if (ObjectUtils.isEmpty(candidateSeedServers)) {
-            return Lists.newArrayList(currentServer());
+            return Lists.newArrayList();
         }
 
-        List<ServerInfoPo> healthServer = new ArrayList<>();
+        List<ServerInfoPo> healthServers = new ArrayList<>();
 
         AkkaServerEnvironment env = AkkaServerEnvironment.getEnv();
         for (ServerInfoPo serverInfoPo : candidateSeedServers) {
-            String pingPath = env.getActorPath(serverInfoPo.getIp(), serverInfoPo.getPort(), "ping");
-            CompletableFuture<Object> result = (CompletableFuture<Object>) akka.pattern.Patterns.ask(
+
+            // 约定最多返回2个种子节点
+            if (healthServers.size() >= size) {
+                return healthServers;
+            }
+
+            String pingPath = AkkaServerEnvironment.buildActorPath(serverInfoPo.getIp(), serverInfoPo.getPort(), "ping");
+            CompletableFuture<Object> future = (CompletableFuture<Object>) akka.pattern.Patterns.ask(
                     env.getActorSystem().actorSelection(pingPath),
                     new Ping(),
                     Duration.ofMillis(3000)
             );
 
             try {
-                Object r = result.get();
-                healthServer.add(serverInfoPo);
+                String result = (String) future.get();
+                if ("pong".equals(result)) {
+                    healthServers.add(serverInfoPo);
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
                 if (e.getCause() instanceof AskTimeoutException) {
-                    log.warn("server is down, server={}", JSON.toJSONString(serverInfoPo));
+                    log.warn("server {}:{} is unhealthy", serverInfoPo.getIp(), serverInfoPo.getPort());
                 }
             }
         }
 
-        return null;
+        return healthServers;
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
@@ -103,12 +115,23 @@ public class ServerService {
         return serverInfoPo;
     }
 
+    public void removeCurrentServer() {
+        AkkaServerEnvironment env = AkkaServerEnvironment.getEnv();
+        if (StringUtils.isEmpty(env.getServerIp())) {
+            return;
+        }
+
+        serverInfoMapper.delete(buildWrapper(env.getServerIp(), env.getServerPort()));
+    }
+
+    private static final int EXPIRED_TS = 2 * 3600 * 1000;
+
     /**
-     * 超过1天仍然没有上报过心跳的服务器
+     * 超过2小时仍然没有上报过心跳的服务器
      */
-    @Scheduled(fixedDelay = 2 * 3600 * 1000)
+    @Scheduled(fixedDelay = EXPIRED_TS)
     public void removeExpiredServers() {
-        Date yesterday = DateUtils.addDays(new Date(), -1);
+        Date yesterday = DateUtils.addMilliseconds(new Date(), -1 * EXPIRED_TS);
 
         AkkaServerEnvironment akkaEnv = AkkaServerEnvironment.getEnv();
 

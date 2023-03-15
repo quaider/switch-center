@@ -29,7 +29,7 @@ public class SwitchInfoKey extends ValueObject<SwitchInfoKey> {
     }
 
     private void childSwitchKeyShouldExtendParent(String key, String parentKey) {
-        if (!key.startsWith(parentKey + ".")) {
+        if (!key.startsWith(parentKey)) {
             throw new BizValidateException("child switch with key `{}` should start with parentKey", key);
         }
     }

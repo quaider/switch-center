@@ -15,7 +15,12 @@
 
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-cluster_${scala.binary.version}</artifactId>
+            <artifactId>akka-distributed-data_${scala.binary.version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-cluster-tools_${scala.binary.version}</artifactId>
         </dependency>
 
         <dependency>
