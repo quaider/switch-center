@@ -1,13 +1,12 @@
 package com.cdfsunrise.switchcenter.adapter.application.akka;
 
+import com.cdfsunrise.switchcenter.adapter.application.akka.codec.AkkaSerializable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-
 @Data
 @NoArgsConstructor
-public class CacheEvictionMessage implements Serializable {
+public class CacheEvictionMessage implements AkkaSerializable {
     private static final long serialVersionUID = -349299974620812921L;
 
     private String namespaceId;
