@@ -7,19 +7,24 @@ import akka.cluster.pubsub.DistributedPubSub;
 import akka.cluster.pubsub.DistributedPubSubMediator;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheKey;
+import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheManager;
 
 public class CacheEvictionActor extends AbstractActor {
 
     LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-    public CacheEvictionActor() {
+    private final SwitchCacheManager switchCacheManager;
+
+    public CacheEvictionActor(SwitchCacheManager switchCacheManager) {
+        this.switchCacheManager = switchCacheManager;
         ActorRef mediator = DistributedPubSub.get(getContext().system()).mediator();
         // subscribe to the topic named "content"
         mediator.tell(new DistributedPubSubMediator.Subscribe("cache-eviction", getSelf()), getSelf());
     }
 
-    public static Props create() {
-        return Props.create(CacheEvictionActor.class);
+    public static Props create(SwitchCacheManager cacheManager) {
+        return Props.create(CacheEvictionActor.class, cacheManager);
     }
 
     @Override
@@ -34,6 +39,7 @@ public class CacheEvictionActor extends AbstractActor {
 
     private void onCacheEviction(CacheEvictionMessage message) {
         log.info("================namespace:{}, key:{}=================", message.getKey(), message.getNamespaceId());
+        switchCacheManager.evict(new SwitchCacheKey(message.getNamespaceId(), message.getKey()));
     }
 
 }

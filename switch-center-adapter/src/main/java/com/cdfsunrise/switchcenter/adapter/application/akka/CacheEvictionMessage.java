@@ -12,8 +12,11 @@ public class CacheEvictionMessage implements AkkaSerializable {
     private String namespaceId;
     private String key;
 
+    private String sender;
+
     public CacheEvictionMessage(String namespaceId, String key) {
         this.namespaceId = namespaceId;
         this.key = key;
+        this.sender = AkkaServerEnvironment.getEnv().getAkkaSystemPath();
     }
 }

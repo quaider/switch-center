@@ -4,19 +4,28 @@ import akka.actor.Address;
 import akka.cluster.Cluster;
 import akka.cluster.Member;
 import com.cdfsunrise.switchcenter.adapter.application.akka.AkkaServerEnvironment;
+import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheKey;
+import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheManager;
+import com.cdfsunrise.switchcenter.adapter.driving.repository.switchinfo.dao.SwitchInfoPo;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/akka")
 @Slf4j
 public class TestController {
+
+    @Resource
+    private SwitchCacheManager cacheManager;
 
     @GetMapping("/members")
     public List<NodeInfo> getNodes() {
@@ -29,6 +38,16 @@ public class TestController {
             info.setAddress(f.address());
             info.setLeaderAddr(leader);
             ret.add(info);
+        });
+
+        return ret;
+    }
+
+    @GetMapping("/cache")
+    public Map<SwitchCacheKey, String> getCaches() {
+        Map<SwitchCacheKey, String> ret = new HashMap<>();
+        cacheManager.readView().forEach((k, v) -> {
+            ret.put(k, v.map(SwitchInfoPo::getKey).orElse("empty"));
         });
 
         return ret;

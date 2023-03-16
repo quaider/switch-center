@@ -4,6 +4,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Address;
 import akka.cluster.Cluster;
+import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheManager;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ServerStarter implements ApplicationListener<ContextRefreshedEvent>, DisposableBean {
     private final ServerService serverService;
+    private final SwitchCacheManager cacheManager;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -40,7 +42,7 @@ public class ServerStarter implements ApplicationListener<ContextRefreshedEvent>
 
         actorSystem.actorOf(PingActor.create(), "ping");
         ActorRef cacheEvictionPublisherActor = actorSystem.actorOf(CacheEvictionPublishActor.create(), "cacheEvictionPublisher");
-        ActorRef cacheEvictionActor = actorSystem.actorOf(CacheEvictionActor.create(), "cacheEviction");
+        ActorRef cacheEvictionActor = actorSystem.actorOf(CacheEvictionActor.create(cacheManager), "cacheEviction");
 
         serverService.heartbeat();
 
@@ -62,9 +64,6 @@ public class ServerStarter implements ApplicationListener<ContextRefreshedEvent>
 
         // subscribe CacheEvictionMessage
         actorSystem.getEventStream().subscribe(cacheEvictionActor, CacheEvictionMessage.class);
-
-        // notify
-        // actorSystem.getEventStream().publish(new CacheEvictionMessage("ns", "key"));
     }
 
     @Override

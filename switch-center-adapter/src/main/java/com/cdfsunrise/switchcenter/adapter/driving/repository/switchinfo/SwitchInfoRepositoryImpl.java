@@ -4,8 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.cdfsunrise.smart.framework.core.domain.BaseRepository;
 import com.cdfsunrise.smart.framework.core.domain.EntityStatus;
+import com.cdfsunrise.switchcenter.adapter.application.akka.AkkaServerEnvironment;
+import com.cdfsunrise.switchcenter.adapter.application.akka.CacheEvictionMessage;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfo;
 import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoRepository;
+import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheKey;
+import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheManager;
 import com.cdfsunrise.switchcenter.adapter.driving.repository.switchinfo.dao.SwitchInfoMapper;
 import com.cdfsunrise.switchcenter.adapter.driving.repository.switchinfo.dao.SwitchInfoPo;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,7 @@ import java.util.Optional;
 public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo> implements SwitchInfoRepository {
 
     private final SwitchInfoMapper switchInfoMapper;
+    private final SwitchCacheManager switchCacheManager;
 
     @Override
     protected void saveInternal(SwitchInfo aggregate) {
@@ -36,15 +41,31 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
     }
 
     private void deleteWithCascade(SwitchInfo aggregate) {
+
+        // 删除缓存
+        switchCacheManager.evict(new SwitchCacheKey(aggregate.getSwitchInfoKey().getNamespaceId(), aggregate.getSwitchInfoKey().getKey()));
+
         switchInfoMapper.deleteById(aggregate.getId());
+
+        // async: 延迟双删除
+        AkkaServerEnvironment.getEnv().getPublisher().tell(new CacheEvictionMessage(aggregate.getSwitchInfoKey().getNamespaceId(), aggregate.getSwitchInfoKey().getKey()), null);
 
         if (StringUtils.isEmpty((aggregate.getSwitchInfoKey().getParentKey()))) {
             LambdaQueryWrapper<SwitchInfoPo> batchDeleteQuery = Wrappers.<SwitchInfoPo>lambdaQuery()
                     .eq(SwitchInfoPo::getNamespaceId, aggregate.getSwitchInfoKey().getNamespaceId())
                     .eq(SwitchInfoPo::getParentKey, aggregate.getSwitchInfoKey().getKey());
 
-            switchInfoMapper.delete(batchDeleteQuery);
+            switchInfoMapper.selectList(batchDeleteQuery).forEach(f -> {
+
+                // 删除缓存
+                switchCacheManager.evict(new SwitchCacheKey(f.getNamespaceId(), f.getKey()));
+
+                switchInfoMapper.deleteById(f.getId());
+                
+                AkkaServerEnvironment.getEnv().getPublisher().tell(new CacheEvictionMessage(f.getNamespaceId(), f.getKey()), null);
+            });
         }
+
     }
 
     private void saveSinglePo(SwitchInfoPo switchInfoPo, EntityStatus status) {
@@ -53,6 +74,10 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
         } else if (status == EntityStatus.UPDATED) {
             switchInfoMapper.updateById(switchInfoPo);
         }
+
+        switchCacheManager.addSwitch(switchInfoPo);
+        // async: 延迟双删除
+        AkkaServerEnvironment.getEnv().getPublisher().tell(new CacheEvictionMessage(switchInfoPo.getNamespaceId(), switchInfoPo.getKey()), null);
     }
 
     @Override

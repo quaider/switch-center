@@ -4,7 +4,8 @@ import com.cdfsunrise.smart.framework.core.Result;
 import com.cdfsunrise.switchcenter.adapter.application.akka.AkkaServerEnvironment;
 import com.cdfsunrise.switchcenter.adapter.application.akka.CacheEvictionMessage;
 import com.cdfsunrise.switchcenter.adapter.application.switchinfo.*;
-import com.cdfsunrise.switchcenter.adapter.domain.switchinfo.SwitchInfoRepository;
+import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheKey;
+import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheManager;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -21,9 +22,10 @@ import javax.validation.Valid;
 public class OpenApiSwitchInfoController {
 
     private final SwitchInfoService switchInfoService;
-    private final SwitchInfoRepository switchInfoRepository;
 
     private final SwitchInfoAssembler switchInfoAssembler;
+
+    private final SwitchCacheManager cacheManager;
 
     @ApiImplicitParams({
             @ApiImplicitParam(name = "namespaceId", value = "命名空间", dataTypeClass = String.class, required = true),
@@ -31,11 +33,10 @@ public class OpenApiSwitchInfoController {
     })
     @GetMapping(value = "/{namespaceId}/{key}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Result<SwitchInfoValueResponse> getSwitchInfoValue(@PathVariable String namespaceId, @PathVariable String key) {
-        SwitchInfoValueResponse payload = switchInfoRepository.findByNamespaceAndKey(namespaceId, key)
-                .map(switchInfoAssembler::toSwitchInfoValueResponse)
-                .orElse(null);
 
-        return Result.success(payload);
+        return cacheManager.getSwitch(new SwitchCacheKey(namespaceId, key))
+                .map(f -> Result.success(switchInfoAssembler.toSwitchInfoValueResponse(f)))
+                .orElse(Result.notFound());
     }
 
     @PutMapping("/{namespaceId}")
@@ -57,8 +58,6 @@ public class OpenApiSwitchInfoController {
     @PostMapping("/{namespaceId}/{key}")
     public Result<Void> changeStatus(@PathVariable String namespaceId, @PathVariable String key, @RequestBody @Valid SwitchInfoStatusChangeCmd cmd) {
         switchInfoService.changeStatus(namespaceId, key, cmd);
-
-        AkkaServerEnvironment.getEnv().getPublisher().tell(new CacheEvictionMessage(namespaceId, key), null);
 
         return Result.success();
     }

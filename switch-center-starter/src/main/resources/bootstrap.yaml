@@ -1,5 +1,6 @@
 server:
-  port: ${random.int(2000,8000)}
+#  port: ${random.int(2000,8000)}
+  port: 8080
   shutdown: graceful
 
 spring:
