@@ -1,11 +1,18 @@
 package com.cdfsunrise.switchcenter.adapter.driving.cache;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Value;
+import lombok.NoArgsConstructor;
 
-@Value
+import java.io.Serializable;
+
+@Data
 @EqualsAndHashCode
-public class SwitchCacheKey {
-    String namespace;
-    String key;
+@AllArgsConstructor
+@NoArgsConstructor
+public class SwitchCacheKey implements Serializable {
+    private static final long serialVersionUID = 933964211066654946L;
+    private String namespace;
+    private String key;
 }

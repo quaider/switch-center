@@ -34,7 +34,7 @@ public class SwitchCacheManager {
         cache = CacheBuilder.newBuilder()
                 .concurrencyLevel(CONCURRENCY_LEVEL)
                 .maximumSize(CAPACITY)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .expireAfterWrite(3600, TimeUnit.SECONDS) // 最大允许30秒内的数据不一致(数据在节点脑裂等情况不可达时，可能出现数据不一致的情况)
                 .build(cacheLoader());
     }
 
@@ -68,7 +68,7 @@ public class SwitchCacheManager {
     private CacheLoader<SwitchCacheKey, Optional<SwitchInfoPo>> cacheLoader() {
         return new CacheLoader<SwitchCacheKey, Optional<SwitchInfoPo>>() {
             @Override
-            public Optional<SwitchInfoPo> load(SwitchCacheKey key) throws Exception {
+            public Optional<SwitchInfoPo> load(SwitchCacheKey key) {
                 return loadSwitch(key);
             }
         };

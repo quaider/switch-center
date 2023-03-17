@@ -7,8 +7,8 @@ import akka.cluster.pubsub.DistributedPubSub;
 import akka.cluster.pubsub.DistributedPubSubMediator;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheKey;
 import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheManager;
+import org.apache.commons.lang3.ObjectUtils;
 
 public class CacheEvictionActor extends AbstractActor {
 
@@ -38,8 +38,12 @@ public class CacheEvictionActor extends AbstractActor {
     }
 
     private void onCacheEviction(CacheEvictionMessage message) {
-        log.info("================namespace:{}, key:{}=================", message.getKey(), message.getNamespaceId());
-        switchCacheManager.evict(new SwitchCacheKey(message.getNamespaceId(), message.getKey()));
+        log.info("================cache eviction begin====namespace:{}, key:{}=================", message.getKey().getNamespace(), message.getKey().getKey());
+        switchCacheManager.evict(message.getKey());
+
+        if (ObjectUtils.isNotEmpty(message.getChildren())) {
+            message.getChildren().forEach(switchCacheManager::evict);
+        }
     }
 
 }
