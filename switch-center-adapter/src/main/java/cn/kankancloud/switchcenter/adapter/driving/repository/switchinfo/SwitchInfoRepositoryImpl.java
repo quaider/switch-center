@@ -3,14 +3,14 @@ package cn.kankancloud.switchcenter.adapter.driving.repository.switchinfo;
 import cn.kankancloud.jbp.core.domain.BaseRepository;
 import cn.kankancloud.jbp.core.domain.EntityStatus;
 import cn.kankancloud.jbp.mbp.utils.ServiceProvider;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import cn.kankancloud.switchcenter.adapter.domain.switchinfo.SwitchEvent;
 import cn.kankancloud.switchcenter.adapter.domain.switchinfo.SwitchInfo;
 import cn.kankancloud.switchcenter.adapter.domain.switchinfo.SwitchInfoKey;
 import cn.kankancloud.switchcenter.adapter.domain.switchinfo.SwitchInfoRepository;
 import cn.kankancloud.switchcenter.adapter.driving.repository.switchinfo.dao.SwitchInfoMapper;
 import cn.kankancloud.switchcenter.adapter.driving.repository.switchinfo.dao.SwitchInfoPo;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -29,24 +29,25 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
     private final SwitchInfoMapper switchInfoMapper;
 
     @Override
-    protected void saveInternal(SwitchInfo aggregate) {
+    protected Integer saveInternal(SwitchInfo aggregate) {
         if (aggregate.entityStatus().isDeleted()) {
-            deleteWithCascade(aggregate);
-            return;
+            return deleteWithCascade(aggregate);
         }
 
         SwitchInfoPo switchPo = SwitchInfoConverter.toPo(aggregate);
         if (aggregate.entityStatus() != EntityStatus.UNCHANGED) {
-            saveSinglePo(switchPo, aggregate);
+            return saveSinglePo(switchPo, aggregate);
         }
+
+        return -1;
     }
 
-    private void deleteWithCascade(SwitchInfo aggregate) {
+    private int deleteWithCascade(SwitchInfo aggregate) {
 
         List<SwitchInfoKey> childKeys = new ArrayList<>();
 
         // 删除缓存
-        switchInfoMapper.deleteById(aggregate.getId());
+        int effect = switchInfoMapper.deleteById(aggregate.getId());
 
         if (StringUtils.isEmpty((aggregate.getSwitchInfoKey().getParentKey()))) {
             LambdaQueryWrapper<SwitchInfoPo> batchDeleteQuery = Wrappers.<SwitchInfoPo>lambdaQuery()
@@ -57,23 +58,32 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
                     .map(f -> new SwitchInfoKey(f.getNamespaceId(), f.getParentKey(), f.getKey()))
                     .collect(Collectors.toList());
 
-            switchInfoMapper.delete(batchDeleteQuery);
+            effect += switchInfoMapper.delete(batchDeleteQuery);
         }
 
         ServiceProvider.getEventBus().publishEvent(new SwitchEvent.Deleted(aggregate.getSwitchInfoKey(), childKeys));
+
+        return effect;
     }
 
-    private void saveSinglePo(SwitchInfoPo switchInfoPo, SwitchInfo switchInfo) {
+    private int saveSinglePo(SwitchInfoPo switchInfoPo, SwitchInfo switchInfo) {
         if (switchInfo.entityStatus().isNew()) {
             switchInfoMapper.insert(switchInfoPo);
-            switchInfo.onPersisted(switchInfo.getId());
+            switchInfo.onPersisted(switchInfoPo.getId());
 
             ServiceProvider.getEventBus().publishEvent(new SwitchEvent.Added(switchInfo));
-        } else if (switchInfo.entityStatus().isUpdated()) {
-            switchInfoMapper.updateById(switchInfoPo);
 
-            ServiceProvider.getEventBus().publishEvent(new SwitchEvent.Updated(switchInfo));
+            return switchInfo.getId();
+        } else if (switchInfo.entityStatus().isUpdated()) {
+            int effect = switchInfoMapper.updateById(switchInfoPo);
+            if (effect > 0) {
+                ServiceProvider.getEventBus().publishEvent(new SwitchEvent.Updated(switchInfo));
+            }
+
+            return effect;
         }
+
+        return -1;
     }
 
     @Override

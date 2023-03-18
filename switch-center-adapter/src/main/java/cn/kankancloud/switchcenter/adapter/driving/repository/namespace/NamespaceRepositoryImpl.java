@@ -21,9 +21,9 @@ class NamespaceRepositoryImpl extends BaseRepository<Integer, Namespace> impleme
     private final NamespaceMapper namespaceMapper;
 
     @Override
-    protected void saveInternal(Namespace ns) {
+    protected Integer saveInternal(Namespace ns) {
         if (ns.entityStatus().isUnchanged()) {
-            return;
+            return ns.getId();
         }
 
         NamespacePo nsPo = NamespaceConverter.toPo(ns);
@@ -31,18 +31,16 @@ class NamespaceRepositoryImpl extends BaseRepository<Integer, Namespace> impleme
         if (ns.entityStatus().isNew()) {
             nsPo.setNamespaceId(ns.getNamespaceId());
             namespaceMapper.insert(nsPo);
-            ns.onPersisted(nsPo.getId());
-            return;
+            return nsPo.getId();
         }
 
         if (ns.entityStatus().isUpdated()) {
             // do not update
             nsPo.setNamespaceId(null);
-            namespaceMapper.updateById(nsPo);
-            return;
+            return namespaceMapper.updateById(nsPo);
         }
 
-        namespaceMapper.deleteById(ns.getId());
+        return namespaceMapper.deleteById(ns.getId());
     }
 
     @Override
