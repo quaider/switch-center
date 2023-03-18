@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * 缓存淘汰消息
+ */
 @Data
 @NoArgsConstructor
 public class CacheEvictionMessage implements AkkaSerializable {

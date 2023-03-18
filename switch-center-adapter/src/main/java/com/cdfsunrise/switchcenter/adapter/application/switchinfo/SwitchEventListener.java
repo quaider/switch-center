@@ -62,6 +62,9 @@ public class SwitchEventListener {
     }
 
     private void publishCacheEvictionMessage(CacheEvictionMessage message) {
+        // akka distributed pub and sub的模式是 at most once，这意味着消息存在丢失的可能性(节点网络闪断、失联等情况)
+        // 如果一定要实现 at least once模式，则需要引入mq，为了简单起见，这里允许一定的消息丢失,
+        // 即可能会出现节点间数据不一致的情况，这个不一致的时间也就是缓存时长(目前设定的是30秒)
         AkkaServerEnvironment.getEnv().getPublisher().tell(message, null);
     }
 

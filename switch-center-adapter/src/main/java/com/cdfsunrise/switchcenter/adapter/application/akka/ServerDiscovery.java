@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ServerService {
+public class ServerDiscovery {
 
     private final ServerInfoMapper serverInfoMapper;
 
@@ -35,17 +35,7 @@ public class ServerService {
         return serverInfoMapper.selectOne(buildWrapper(ip, port));
     }
 
-    public List<ServerInfoPo> getCandidateSeedServers() {
-        Date healthEndTime = DateUtils.addHours(new Date(), -1);
-
-        LambdaQueryWrapper<ServerInfoPo> queryWrapper = Wrappers.<ServerInfoPo>lambdaQuery()
-                .gt(ServerInfoPo::getUpdateTime, healthEndTime)
-                .orderByAsc(ServerInfoPo::getUpdateTime);
-
-        return serverInfoMapper.selectList(queryWrapper);
-    }
-
-    public List<ServerInfoPo> electSeedServer(int size) {
+    public List<ServerInfoPo> discoverySeedNodes(int size) {
         final ServerInfoPo currentServer = currentServer();
         List<ServerInfoPo> candidateSeedServers = getCandidateSeedServers().stream()
                 .filter(f -> !f.getIp().equals(currentServer.getIp()) || !f.getPort().equals(currentServer.getPort()))
@@ -65,6 +55,7 @@ public class ServerService {
                 return healthServers;
             }
 
+            // ping target actor
             String pingPath = AkkaServerEnvironment.buildActorPath(serverInfoPo.getIp(), serverInfoPo.getPort(), "ping");
             CompletableFuture<Object> future = (CompletableFuture<Object>) akka.pattern.Patterns.ask(
                     env.getActorSystem().actorSelection(pingPath),
@@ -87,6 +78,16 @@ public class ServerService {
         }
 
         return healthServers;
+    }
+
+    private List<ServerInfoPo> getCandidateSeedServers() {
+        Date healthEndTime = DateUtils.addHours(new Date(), -1);
+
+        LambdaQueryWrapper<ServerInfoPo> queryWrapper = Wrappers.<ServerInfoPo>lambdaQuery()
+                .gt(ServerInfoPo::getUpdateTime, healthEndTime)
+                .orderByAsc(ServerInfoPo::getUpdateTime);
+
+        return serverInfoMapper.selectList(queryWrapper);
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
@@ -127,7 +128,7 @@ public class ServerService {
     private static final int EXPIRED_TS = 2 * 3600 * 1000;
 
     /**
-     * 超过2小时仍然没有上报过心跳的服务器
+     * 超过2小时仍然没有上报过心跳的服务器，将其从种子节点的服务发现中剔除
      */
     @Scheduled(fixedDelay = EXPIRED_TS)
     public void removeExpiredServers() {

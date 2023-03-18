@@ -110,6 +110,8 @@ public class SwitchInfoRepositoryImpl extends BaseRepository<Integer, SwitchInfo
 
     @Override
     public Optional<SwitchInfo> findById(Integer id) {
-        return null;
+        SwitchInfoPo switchInfoPo = switchInfoMapper.selectById(id);
+
+        return Optional.ofNullable(SwitchInfoConverter.toDomain(switchInfoPo));
     }
 }

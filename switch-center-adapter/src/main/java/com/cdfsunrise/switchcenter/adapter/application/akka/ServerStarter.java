@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ServerStarter implements ApplicationListener<ContextRefreshedEvent>, DisposableBean {
-    private final ServerService serverService;
+    private final ServerDiscovery serverDiscovery;
     private final SwitchCacheManager cacheManager;
 
     @Override
@@ -44,7 +44,7 @@ public class ServerStarter implements ApplicationListener<ContextRefreshedEvent>
         ActorRef cacheEvictionPublisherActor = actorSystem.actorOf(CacheEvictionPublishActor.create(), "cacheEvictionPublisher");
         ActorRef cacheEvictionActor = actorSystem.actorOf(CacheEvictionActor.create(cacheManager), "cacheEviction");
 
-        serverService.heartbeat();
+        serverDiscovery.heartbeat();
 
         log.info("^.^ akka server {} started", env.getAkkaSystemPath());
 
@@ -52,7 +52,7 @@ public class ServerStarter implements ApplicationListener<ContextRefreshedEvent>
         env.setCluster(cluster);
         env.setPublisher(cacheEvictionPublisherActor);
 
-        List<Address> list = serverService.electSeedServer(2).stream()
+        List<Address> list = serverDiscovery.discoverySeedNodes(2).stream()
                 .map(f -> Address.apply("akka", AkkaServerEnvironment.ACTOR_SYS_NAME, f.getIp(), f.getPort()))
                 .collect(Collectors.toList());
 
@@ -67,7 +67,7 @@ public class ServerStarter implements ApplicationListener<ContextRefreshedEvent>
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         AkkaServerEnvironment env = AkkaServerEnvironment.getEnv();
         if (env.getActorSystem() == null) {
             return;
@@ -78,7 +78,7 @@ public class ServerStarter implements ApplicationListener<ContextRefreshedEvent>
 
         try {
             log.info("deleting current akka server seed {}", env.getAkkaSystemPath());
-            serverService.removeCurrentServer();
+            serverDiscovery.removeCurrentServer();
         } catch (Exception e) {
             log.warn("delete akka current server {} failed", env.getAkkaSystemPath(), e);
         }

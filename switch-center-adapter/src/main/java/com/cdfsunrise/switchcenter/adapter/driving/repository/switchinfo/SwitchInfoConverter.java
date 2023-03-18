@@ -27,6 +27,10 @@ public class SwitchInfoConverter {
     }
 
     public static SwitchInfo toDomain(SwitchInfoPo po) {
+        if (po == null) {
+            return null;
+        }
+
         return new SwitchInfo(
                 new SwitchInfoKey(po.getNamespaceId(), po.getParentKey(), po.getKey()),
                 new SwitchInfoDescription(po.getName(), po.getDescription()),
