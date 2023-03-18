@@ -22,10 +22,10 @@ springdoc:
   group-configs:
     - group: '开放平台'
       paths-to-match: '/openapi/**'
-      packages-to-scan: com.cdfsunrise.switchcenter.adapter.openapi
+      packages-to-scan: cn.kankancloud.switchcenter.adapter.openapi
     - group: 'web后台'
       paths-to-match: '/**'
-      packages-to-scan: com.cdfsunrise.switchcenter.adapter.api
+      packages-to-scan: cn.kankancloud.switchcenter.adapter.api
 
 # knife4j
 knife4j:

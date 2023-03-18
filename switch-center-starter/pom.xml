@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>switch-center</artifactId>
-        <groupId>com.cdfsunrise</groupId>
+        <groupId>cn.kankancloud</groupId>
         <version>${revision}</version>
     </parent>
 
@@ -23,7 +23,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.cdfsunrise</groupId>
+            <groupId>cn.kankancloud</groupId>
             <artifactId>switch-center-adapter</artifactId>
         </dependency>
 

@@ -9,8 +9,8 @@
     </modules>
 
     <parent>
-        <groupId>com.cdfsunrise</groupId>
-        <artifactId>smart-framework</artifactId>
+        <groupId>cn.kankancloud</groupId>
+        <artifactId>java-boilerplate</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
@@ -55,19 +55,19 @@
             </dependency>
 
             <dependency>
-                <groupId>com.cdfsunrise</groupId>
-                <artifactId>mbp-spring-boot-starter</artifactId>
+                <groupId>cn.kankancloud</groupId>
+                <artifactId>jbp-mbp-spring-boot-starter</artifactId>
                 <version>${framework.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>com.cdfsunrise</groupId>
-                <artifactId>web-spring-boot-starter</artifactId>
+                <groupId>cn.kankancloud</groupId>
+                <artifactId>jbp-web-spring-boot-starter</artifactId>
                 <version>${framework.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>com.cdfsunrise</groupId>
+                <groupId>cn.kankancloud</groupId>
                 <artifactId>switch-center-adapter</artifactId>
                 <version>${revision}</version>
             </dependency>
