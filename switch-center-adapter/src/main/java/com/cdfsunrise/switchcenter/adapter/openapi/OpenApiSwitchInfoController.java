@@ -1,21 +1,19 @@
 package com.cdfsunrise.switchcenter.adapter.openapi;
 
 import com.cdfsunrise.smart.framework.core.Result;
-import com.cdfsunrise.switchcenter.adapter.application.akka.AkkaServerEnvironment;
-import com.cdfsunrise.switchcenter.adapter.application.akka.CacheEvictionMessage;
 import com.cdfsunrise.switchcenter.adapter.application.switchinfo.*;
 import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheKey;
 import com.cdfsunrise.switchcenter.adapter.driving.cache.SwitchCacheManager;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
-@Api(tags = "开关配置", produces = MediaType.APPLICATION_JSON_VALUE)
+@Tag(name = "switch")
 @RestController
 @RequestMapping("/openapi/switch")
 @RequiredArgsConstructor
@@ -27,10 +25,9 @@ public class OpenApiSwitchInfoController {
 
     private final SwitchCacheManager cacheManager;
 
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "namespaceId", value = "命名空间", dataTypeClass = String.class, required = true),
-            @ApiImplicitParam(name = "key", value = "开关键", dataTypeClass = String.class, required = true)
-    })
+    @Operation(summary = "普通body请求")
+    @Parameter(name = "namespaceId", description = "命名空间", required = true)
+    @Parameter(name = "key", description = "开关键", required = true)
     @GetMapping(value = "/{namespaceId}/{key}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Result<SwitchInfoValueResponse> getSwitchInfoValue(@PathVariable String namespaceId, @PathVariable String key) {
 

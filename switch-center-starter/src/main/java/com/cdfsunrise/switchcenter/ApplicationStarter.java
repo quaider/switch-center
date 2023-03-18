@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 @EnableDiscoveryClient
 @MapperScan("com.cdfsunrise.switchcenter.adapter.driving.repository.*.dao")
-@Import(SwaggerConfiguration.class)
+// @Import(SwaggerConfiguration.class)
 @EnableDomainInjector(basePackages = {"com.cdfsunrise.switchcenter.adapter.domain"})
 public class ApplicationStarter {
     public static void main(String[] args) {

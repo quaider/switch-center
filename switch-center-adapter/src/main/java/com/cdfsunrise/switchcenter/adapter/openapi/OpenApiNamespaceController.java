@@ -7,14 +7,14 @@ import com.cdfsunrise.switchcenter.adapter.application.namespace.NamespaceRespon
 import com.cdfsunrise.switchcenter.adapter.application.namespace.NamespaceService;
 import com.cdfsunrise.switchcenter.adapter.domain.namespace.Namespace;
 import com.cdfsunrise.switchcenter.adapter.domain.namespace.NamespaceValidator;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
-@Api(tags = "namespace openApi")
+@Tag(name = "namespace")
 @RestController
 @RequestMapping("/openapi/ns")
 @RequiredArgsConstructor

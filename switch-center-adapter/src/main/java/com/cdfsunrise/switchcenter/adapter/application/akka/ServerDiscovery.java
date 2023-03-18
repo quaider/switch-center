@@ -125,10 +125,10 @@ public class ServerDiscovery {
         serverInfoMapper.delete(buildWrapper(env.getServerIp(), env.getServerPort()));
     }
 
-    private static final int EXPIRED_TS = 2 * 3600 * 1000;
+    private static final int EXPIRED_TS = 10 * 30 * 1000;
 
     /**
-     * 超过2小时仍然没有上报过心跳的服务器，将其从种子节点的服务发现中剔除
+     * 超过10次仍然没有上报过心跳的服务器，将其从种子节点的服务发现中剔除
      */
     @Scheduled(fixedDelay = EXPIRED_TS)
     public void removeExpiredServers() {
